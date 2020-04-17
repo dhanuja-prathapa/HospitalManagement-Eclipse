@@ -68,10 +68,10 @@ public class HospitalResource {
     @POST
     @Path("hospital")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    public Hospital createHospital(Hospital h){
+    public String createHospital(Hospital h){
         System.out.println(h);
-        repo.createHospital(h);
-        return h;
+        return repo.createHospital(h);
+        
     }
 
     @POST
@@ -92,8 +92,8 @@ public class HospitalResource {
             h.setAddress(address);
             h.setPhone(phone);
             System.out.println(h);
-            repo.createHospital(h);
-            return "Added";
+          return repo.createHospital(h);
+          
     }
 
     @PUT

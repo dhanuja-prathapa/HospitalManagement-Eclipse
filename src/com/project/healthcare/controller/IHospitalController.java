@@ -6,7 +6,7 @@ import com.project.healthcare.model.Hospital;
 
 public interface IHospitalController {
 
-    public void createHospital(Hospital h);
+    public String createHospital(Hospital h);
 
     public Hospital getHospital(int id);
 

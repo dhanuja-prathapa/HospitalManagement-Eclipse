@@ -1,15 +1,28 @@
 package com.project.healthcare.controller;
 
+
 import com.project.healthcare.model.Hospital;
+import com.project.healthcare.model.HospitalAuth;
 import com.project.healthcare.utils.Constants;
 import com.project.healthcare.utils.idGenerate;
-
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.sql.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import static com.project.healthcare.utils.DBConnection.*;
 
@@ -43,10 +56,26 @@ public class HospitalController implements IHospitalController {
     }
 
     @Override
-    public void createHospital(Hospital h) {
+    public String createHospital(Hospital h) {
         int hosId = idGenerate.generateHosID((ArrayList<Integer>) getIDs());
         String sql = "insert into hospital values (?,?,?,?,?,?)";
+        boolean validate = false;
+        List<HospitalAuth> pAuthList = getDetails();
         connecton = getDBConnection();
+        for (HospitalAuth hospitalAuth : pAuthList) {
+			System.out.println("PAUTH:1 " + hospitalAuth.getName());
+			System.out.println("PAUTH:2 " + h.getName());
+			System.out.println("PAUTH:1 " + hospitalAuth.getLicence());
+			
+			if(h.getName().equals(hospitalAuth.getName())) {
+			
+					validate = true;
+					System.out.println("VALIDATE: " + validate);
+					break;
+				}
+			
+		}
+        if(validate) {
             try {
                 pt = connecton.prepareStatement(sql);
                 pt.setInt(1, hosId);
@@ -61,6 +90,11 @@ public class HospitalController implements IHospitalController {
             } finally {
                 ptClose(pt);
             }
+            return "Created";
+        }else {
+        	return "Not a Valid Hospital";
+        }
+        
         }
 
 
@@ -181,7 +215,44 @@ public class HospitalController implements IHospitalController {
         }
         return arrayList;
     }
+    
+    public List<HospitalAuth> getDetails() {
+		
+    	List<HospitalAuth> dataList = new ArrayList<HospitalAuth>();
+		
+		try {
 
+			Client client = Client.create();
+
+			WebResource webResource = client
+			   .resource("http://localhost:8090/regHospitals");
+
+			ClientResponse response = webResource.accept("application/json")
+	                   .get(ClientResponse.class);
+
+			if (response.getStatus() != 200) {
+			   throw new RuntimeException("Failed : HTTP error code : "
+				+ response.getStatus());
+			}
+
+			String output = response.getEntity(String.class);
+			JSONArray jsonArr = new JSONArray(output);
+		 
+		    for (int i = 0; i < jsonArr.length(); i++) {
+		        JSONObject jsonObj = jsonArr.getJSONObject(i);
+		        HospitalAuth data = new HospitalAuth();
+		        data.setName(jsonObj.getString("name"));
+		        data.setLicence(jsonObj.getString("licence"));
+		        dataList.add(data);
+		    }
+
+		  } catch (Exception e) {
+			log.log(Level.SEVERE, e.getMessage());
+
+		  }
+			
+		return dataList;
+	}
 
 
 }
